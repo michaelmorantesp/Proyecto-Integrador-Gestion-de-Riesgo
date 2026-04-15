@@ -1,0 +1,33 @@
+# Virtual environments
+.venv/
+env/
+venv/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# SQLite cache files
+*.sqlite
+*.sqlite3
+
+# Temporary files
+temp_text.txt
+parsed_out.txt
+parsed_out_utf8.txt
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

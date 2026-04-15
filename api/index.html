@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RiskLab API · Risk Analytics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:       #06090F;
+            --bg-side:  #09101C;
+            --bg-card:  #0D1524;
+            --bg-input: #060C18;
+            --bg-res:   #040810;
+            --border:   rgba(255,255,255,0.055);
+            --text:     #E2E8F0;
+            --muted:    #64748B;
+            --blue:     #3B82F6;
+            --teal:     #06B6D4;
+            --green:    #10B981;
+            --amber:    #F59E0B;
+            --red:      #F87171;
+            --violet:   #8B5CF6;
+            --sw: 270px;
+            --r: 12px;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: grid;
+            grid-template-columns: var(--sw) 1fr;
+            min-height: 100vh;
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(59,130,246,0.25); border-radius: 2px; }
+
+        /* ── Sidebar ───────────────────────────────────────────────────────── */
+        .sidebar {
+            position: sticky; top: 0; height: 100vh;
+            overflow-y: auto; background: var(--bg-side);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .brand {
+            padding: 20px 16px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        .brand-row { display: flex; align-items: center; gap: 9px; margin-bottom: 4px; }
+        .brand-icon {
+            width: 26px; height: 26px; border-radius: 6px;
+            background: linear-gradient(135deg, #1D4ED8, #06B6D4);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; flex-shrink: 0;
+        }
+        .brand-name {
+            font-size: 1.05rem; font-weight: 700; letter-spacing: -0.02em;
+            background: linear-gradient(90deg, #60A5FA, #38BDF8);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .brand-sub {
+            font-size: 0.7rem; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 0.09em; padding-left: 35px;
+        }
+        nav { padding: 16px 0; flex: 1; }
+        .nav-label {
+            font-size: 0.72rem; color: var(--muted); text-transform: uppercase;
+            letter-spacing: 0.1em; padding: 8px 18px 5px; font-weight: 600;
+        }
+        .nav-link {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 18px; font-size: 0.92rem; color: var(--muted);
+            text-decoration: none; transition: all .15s; border-left: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: var(--text); background: rgba(59,130,246,0.07);
+            border-left-color: var(--blue);
+        }
+        .nav-icon { font-size: 1rem; width: 18px; text-align: center; }
+        .sidebar-footer {
+            padding: 12px 14px;
+            border-top: 1px solid var(--border);
+        }
+        .btn-docs {
+            display: block; text-align: center; padding: 9px 10px;
+            background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25);
+            color: var(--blue); border-radius: 8px; font-size: 0.85rem;
+            text-decoration: none; transition: all .15s;
+        }
+        .btn-docs:hover { background: rgba(59,130,246,0.18); }
+
+        /* ── Main ─────────────────────────────────────────────────────────── */
+        main { overflow-y: auto; padding: 36px 48px 72px; }
+        .page-title {
+            font-size: 1.7rem; font-weight: 700; letter-spacing: -0.03em;
+            background: linear-gradient(90deg, #E2E8F0, #64748B);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+        }
+        .page-sub { font-size: 0.95rem; color: var(--muted); margin-bottom: 36px; }
+
+        /* ── Section ──────────────────────────────────────────────────────── */
+        section { margin-bottom: 48px; scroll-margin-top: 20px; }
+        .section-header {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.85rem; font-weight: 600; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 0.1em;
+            margin-bottom: 18px; padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        .section-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--blue); flex-shrink: 0;
+        }
+        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .full { grid-column: 1 / -1; }
+
+        /* ── Card ─────────────────────────────────────────────────────────── */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            overflow: hidden;
+            transition: border-color .2s;
+        }
+        .card:hover { border-color: var(--border-hover, rgba(59,130,246,0.2)); }
+        .card-accent { height: 4px; background: var(--accent, var(--blue)); }
+        .card-head {
+            padding: 18px 22px 14px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+        }
+        .card-title { font-size: 1.05rem; font-weight: 600; margin-bottom: 5px; }
+        .card-desc { font-size: 0.88rem; color: var(--muted); line-height: 1.5; }
+        .pill-endpoint {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem; padding: 4px 10px;
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+            border-radius: 5px; color: var(--muted); white-space: nowrap; flex-shrink: 0;
+        }
+        .badge {
+            font-size: 0.68rem; font-weight: 700; padding: 3px 8px;
+            border-radius: 4px; letter-spacing: 0.06em; text-transform: uppercase;
+        }
+        .badge-get  { background: rgba(59,130,246,0.15); color: var(--blue);  border: 1px solid rgba(59,130,246,0.3); }
+        .badge-post { background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid rgba(245,158,11,0.3); }
+        .card-body { padding: 18px 22px; }
+
+        /* ── Form controls ────────────────────────────────────────────────── */
+        .fields { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+        .field { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 130px; }
+        .field label { font-size: 0.78rem; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; }
+        .finput, .fselect {
+            background: var(--bg-input); border: 1px solid var(--border);
+            color: var(--text); border-radius: 7px; padding: 9px 12px;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;
+            outline: none; transition: border-color .15s; width: 100%;
+        }
+        .finput:focus, .fselect:focus { border-color: rgba(59,130,246,0.5); }
+        .fselect {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2364748B'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 12px center;
+            padding-right: 32px;
+        }
+        .run-btn {
+            padding: 10px 24px; border: none; border-radius: 7px; cursor: pointer;
+            font-size: 0.9rem; font-weight: 600; letter-spacing: 0.03em;
+            background: linear-gradient(135deg, #1D4ED8, #0EA5E9);
+            color: #fff; transition: opacity .15s;
+        }
+        .run-btn:hover { opacity: 0.88; }
+        .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* ── Result panel ─────────────────────────────────────────────────── */
+        .result-wrap { margin-top: 16px; }
+        .result-toolbar {
+            display: flex; align-items: center; gap: 8px;
+            padding: 7px 14px;
+            background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+            border-bottom: none; border-radius: var(--r) var(--r) 0 0;
+        }
+        .result-toolbar-title { font-size: 0.78rem; color: var(--muted); flex: 1; font-weight: 500; }
+        .status-ok  { background: rgba(16,185,129,0.15); color: var(--green);  border: 1px solid rgba(16,185,129,0.3);  font-size: 0.75rem; padding: 2px 9px; border-radius: 4px; font-weight: 700; }
+        .status-err { background: rgba(248,113,113,0.15); color: var(--red);   border: 1px solid rgba(248,113,113,0.3); font-size: 0.75rem; padding: 2px 9px; border-radius: 4px; font-weight: 700; }
+        .ms-label   { font-size: 0.75rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+        .tb-btn {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+            color: var(--muted); border-radius: 5px; padding: 3px 10px;
+            font-size: 0.75rem; cursor: pointer; transition: all .15s;
+        }
+        .tb-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+        .result-body {
+            background: var(--bg-res); border: 1px solid var(--border);
+            border-radius: 0 0 var(--r) var(--r);
+            padding: 16px 18px; font-family: 'JetBrains Mono', monospace;
+            font-size: 0.88rem; line-height: 1.75; overflow-x: auto;
+            color: var(--muted); min-height: 72px; max-height: 520px; overflow-y: auto;
+            white-space: pre-wrap; word-break: break-word;
+        }
+        /* JSON syntax highlighting */
+        .jk { color: #7DD3FC; }   /* keys */
+        .js { color: #86EFAC; }   /* strings */
+        .jn { color: #FCD34D; }   /* numbers */
+        .jb { color: #C4B5FD; }   /* booleans */
+        .jz { color: #94A3B8; }   /* null */
+    </style>
+</head>
+<body>
+
+<!-- ── Sidebar ─────────────────────────────────────────────────────────────── -->
+<aside class="sidebar">
+    <div class="brand">
+        <div class="brand-row">
+            <div class="brand-icon">⬡</div>
+            <span class="brand-name">RiskLab</span>
+        </div>
+        <div class="brand-sub">Quantitative API</div>
+    </div>
+
+    <nav>
+        <div class="nav-label">Endpoints</div>
+        <a class="nav-link active" href="#sec-rendimientos">
+            <span class="nav-icon">📈</span> Rendimientos
+        </a>
+        <a class="nav-link" href="#sec-var">
+            <span class="nav-icon">⚠️</span> VaR
+        </a>
+        <a class="nav-link" href="#sec-backtest">
+            <span class="nav-icon">🔬</span> Backtesting Kupiec
+        </a>
+        <a class="nav-link" href="#sec-frontera">
+            <span class="nav-icon">📐</span> Frontera Eficiente
+        </a>
+        <a class="nav-link" href="#sec-alertas">
+            <span class="nav-icon">🔔</span> Alertas
+        </a>
+        <div class="nav-label" style="margin-top:10px;">Referencia</div>
+        <a class="nav-link" href="/docs" target="_blank">
+            <span class="nav-icon">📄</span> Swagger UI
+        </a>
+        <a class="nav-link" href="/redoc" target="_blank">
+            <span class="nav-icon">📋</span> ReDoc
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <a class="btn-docs" href="/docs" target="_blank">Abrir Swagger Docs ↗</a>
+    </div>
+</aside>
+
+<!-- ── Main ───────────────────────────────────────────────────────────────── -->
+<main>
+    <h1 class="page-title">RiskLab · Quantitative API</h1>
+    <p class="page-sub">API REST de análisis cuantitativo de portafolios · FastAPI + Python</p>
+
+    <!-- ── 1. Rendimientos ──────────────────────────────────────────────────── -->
+    <section id="sec-rendimientos">
+        <div class="section-header"><div class="section-dot"></div> Mercado</div>
+        <div class="grid2">
+            <div class="card full" style="--accent: var(--blue);">
+                <div class="card-accent"></div>
+                <div class="card-head">
+                    <div>
+                        <div class="card-title">Rendimientos</div>
+                        <div class="card-desc">Rendimiento acumulado, media diaria, volatilidad y Sharpe Ratio de un activo.</div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                        <span class="badge badge-get">GET</span>
+                        <span class="pill-endpoint">/rendimientos/{ticker}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="fields">
+                        <div class="field">
+                            <label>Ticker</label>
+                            <input class="finput" id="r1-ticker" value="AAPL" placeholder="AAPL">
+                        </div>
+                        <div class="field">
+                            <label>Inicio</label>
+                            <input class="finput" id="r1-start" type="date" value="2023-01-01">
+                        </div>
+                        <div class="field">
+                            <label>Fin</label>
+                            <input class="finput" id="r1-end" type="date" value="2024-12-31">
+                        </div>
+                    </div>
+                    <button class="run-btn" id="r1-btn" onclick="goRendimientos()">Ejecutar</button>
+                    <div class="result-wrap" id="r1-wrap" style="display:none;">
+                        <div class="result-toolbar">
+                            <span class="result-toolbar-title">Respuesta</span>
+                            <span id="r1-status"></span>
+                            <span class="ms-label" id="r1-ms"></span>
+                            <button class="tb-btn" onclick="copyResult('r1-out')">Copiar</button>
+                            <button class="tb-btn" onclick="clearResult('r1-wrap','r1-out')">Limpiar</button>
+                        </div>
+                        <div class="result-body" id="r1-out">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── 2. VaR ────────────────────────────────────────────────────────────── -->
+    <section id="sec-var">
+        <div class="section-header"><div class="section-dot" style="background:var(--amber)"></div> Riesgo — VaR</div>
+        <div class="grid2">
+            <div class="card full" style="--accent: var(--amber);">
+                <div class="card-accent"></div>
+                <div class="card-head">
+                    <div>
+                        <div class="card-title">Value at Risk (VaR)</div>
+                        <div class="card-desc">VaR diario y anualizado por tres métodos: histórico, paramétrico y montecarlo. Incluye CVaR.</div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                        <span class="badge badge-get">GET</span>
+                        <span class="pill-endpoint">/var/{metodo}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="fields">
+                        <div class="field">
+                            <label>Ticker</label>
+                            <input class="finput" id="v1-ticker" value="AAPL" placeholder="AAPL">
+                        </div>
+                        <div class="field">
+                            <label>Método</label>
+                            <select class="fselect" id="v1-method">
+                                <option value="historico">Histórico</option>
+                                <option value="parametrico" selected>Paramétrico</option>
+                                <option value="montecarlo">Montecarlo</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Confianza</label>
+                            <select class="fselect" id="v1-conf">
+                                <option value="0.90">90%</option>
+                                <option value="0.95" selected>95%</option>
+                                <option value="0.99">99%</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="fields">
+                        <div class="field">
+                            <label>Inicio</label>
+                            <input class="finput" id="v1-start" type="date" value="2023-01-01">
+                        </div>
+                        <div class="field">
+                            <label>Fin</label>
+                            <input class="finput" id="v1-end" type="date" value="2024-12-31">
+                        </div>
+                    </div>
+                    <button class="run-btn" id="v1-btn" onclick="goVar()">Ejecutar</button>
+                    <div class="result-wrap" id="v1-wrap" style="display:none;">
+                        <div class="result-toolbar">
+                            <span class="result-toolbar-title">Respuesta</span>
+                            <span id="v1-status"></span>
+                            <span class="ms-label" id="v1-ms"></span>
+                            <button class="tb-btn" onclick="copyResult('v1-out')">Copiar</button>
+                            <button class="tb-btn" onclick="clearResult('v1-wrap','v1-out')">Limpiar</button>
+                        </div>
+                        <div class="result-body" id="v1-out">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── 3. Backtesting Kupiec ─────────────────────────────────────────────── -->
+    <section id="sec-backtest">
+        <div class="section-header"><div class="section-dot" style="background:var(--violet)"></div> Riesgo — Backtesting (Bonificación)</div>
+        <div class="grid2">
+            <div class="card full" style="--accent: var(--violet);">
+                <div class="card-accent"></div>
+                <div class="card-head">
+                    <div>
+                        <div class="card-title">Backtesting del VaR</div>
+                        <div class="card-desc">Valida el VaR con el Test de Kupiec (POF) y Test de Christoffersen (independencia de fallos).</div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                        <span class="badge badge-get">GET</span>
+                        <span class="pill-endpoint">/var/backtest/{ticker}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="fields">
+                        <div class="field">
+                            <label>Ticker</label>
+                            <input class="finput" id="bt-ticker" value="AAPL" placeholder="AAPL">
+                        </div>
+                        <div class="field">
+                            <label>Método VaR</label>
+                            <select class="fselect" id="bt-method">
+                                <option value="historico">Histórico</option>
+                                <option value="parametrico" selected>Paramétrico</option>
+                                <option value="montecarlo">Montecarlo</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Confianza</label>
+                            <select class="fselect" id="bt-conf">
+                                <option value="0.90">90%</option>
+                                <option value="0.95" selected>95%</option>
+                                <option value="0.99">99%</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="fields">
+                        <div class="field">
+                            <label>Inicio</label>
+                            <input class="finput" id="bt-start" type="date" value="2023-01-01">
+                        </div>
+                        <div class="field">
+                            <label>Fin</label>
+                            <input class="finput" id="bt-end" type="date" value="2024-12-31">
+                        </div>
+                    </div>
+                    <button class="run-btn" id="bt-btn" onclick="goBacktest()">Ejecutar</button>
+                    <div class="result-wrap" id="bt-wrap" style="display:none;">
+                        <div class="result-toolbar">
+                            <span class="result-toolbar-title">Respuesta</span>
+                            <span id="bt-status"></span>
+                            <span class="ms-label" id="bt-ms"></span>
+                            <button class="tb-btn" onclick="copyResult('bt-out')">Copiar</button>
+                            <button class="tb-btn" onclick="clearResult('bt-wrap','bt-out')">Limpiar</button>
+                        </div>
+                        <div class="result-body" id="bt-out">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── 4. Frontera Eficiente ─────────────────────────────────────────────── -->
+    <section id="sec-frontera">
+        <div class="section-header"><div class="section-dot" style="background:var(--teal)"></div> Optimización</div>
+        <div class="grid2">
+            <div class="card full" style="--accent: var(--teal);">
+                <div class="card-accent"></div>
+                <div class="card-head">
+                    <div>
+                        <div class="card-title">Frontera Eficiente — Markowitz</div>
+                        <div class="card-desc">Optimización de portafolio: Mínima Varianza, Máximo Sharpe y portafolio por rendimiento objetivo (bonificación).</div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                        <span class="badge badge-post">POST</span>
+                        <span class="pill-endpoint">/frontera-eficiente</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="fields">
+                        <div class="field" style="flex:2; min-width:200px;">
+                            <label>Tickers (separados por coma)</label>
+                            <input class="finput" id="fe-tickers" value="AAPL,MSFT,TSLA,AMZN" placeholder="AAPL,MSFT,TSLA">
+                        </div>
+                        <div class="field">
+                            <label>Simulaciones</label>
+                            <input class="finput" id="fe-sims" type="number" value="5000" min="1000" max="50000">
+                        </div>
+                        <div class="field">
+                            <label>Rendimiento objetivo (opcional)</label>
+                            <input class="finput" id="fe-target" placeholder="ej: 0.20" value="">
+                        </div>
+                    </div>
+                    <div class="fields">
+                        <div class="field">
+                            <label>Inicio</label>
+                            <input class="finput" id="fe-start" type="date" value="2023-01-01">
+                        </div>
+                        <div class="field">
+                            <label>Fin</label>
+                            <input class="finput" id="fe-end" type="date" value="2024-12-31">
+                        </div>
+                    </div>
+                    <button class="run-btn" id="fe-btn" onclick="goFrontera()">Ejecutar</button>
+                    <div class="result-wrap" id="fe-wrap" style="display:none;">
+                        <div class="result-toolbar">
+                            <span class="result-toolbar-title">Respuesta</span>
+                            <span id="fe-status"></span>
+                            <span class="ms-label" id="fe-ms"></span>
+                            <button class="tb-btn" onclick="copyResult('fe-out')">Copiar</button>
+                            <button class="tb-btn" onclick="clearResult('fe-wrap','fe-out')">Limpiar</button>
+                        </div>
+                        <div class="result-body" id="fe-out">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── 5. Alertas ────────────────────────────────────────────────────────── -->
+    <section id="sec-alertas">
+        <div class="section-header"><div class="section-dot" style="background:var(--green)"></div> Señales Técnicas</div>
+        <div class="grid2">
+            <div class="card full" style="--accent: var(--green);">
+                <div class="card-accent"></div>
+                <div class="card-head">
+                    <div>
+                        <div class="card-title">Alertas de Trading</div>
+                        <div class="card-desc">Motor de señales técnicas consolidadas: RSI, MACD, Bollinger Bands, Cruce de Medias y Estocástico.</div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                        <span class="badge badge-get">GET</span>
+                        <span class="pill-endpoint">/alertas</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="fields">
+                        <div class="field" style="flex:2; min-width:200px;">
+                            <label>Tickers (separados por coma)</label>
+                            <input class="finput" id="al-tickers" value="AAPL,MSFT,TSLA" placeholder="AAPL,MSFT,TSLA">
+                        </div>
+                        <div class="field">
+                            <label>Inicio</label>
+                            <input class="finput" id="al-start" type="date" value="2023-01-01">
+                        </div>
+                        <div class="field">
+                            <label>Fin</label>
+                            <input class="finput" id="al-end" type="date" value="2024-12-31">
+                        </div>
+                    </div>
+                    <button class="run-btn" id="al-btn" onclick="goAlertas()">Ejecutar</button>
+                    <div class="result-wrap" id="al-wrap" style="display:none;">
+                        <div class="result-toolbar">
+                            <span class="result-toolbar-title">Respuesta</span>
+                            <span id="al-status"></span>
+                            <span class="ms-label" id="al-ms"></span>
+                            <button class="tb-btn" onclick="copyResult('al-out')">Copiar</button>
+                            <button class="tb-btn" onclick="clearResult('al-wrap','al-out')">Limpiar</button>
+                        </div>
+                        <div class="result-body" id="al-out">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const BASE = '';
+
+async function apiGet(path) {
+    const t0 = performance.now();
+    const r = await fetch(BASE + path);
+    const ms = Math.round(performance.now() - t0);
+    const json = await r.json();
+    return { ok: r.ok, status: r.status, ms, json };
+}
+
+async function apiPost(path, body) {
+    const t0 = performance.now();
+    const r = await fetch(BASE + path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    });
+    const ms = Math.round(performance.now() - t0);
+    const json = await r.json();
+    return { ok: r.ok, status: r.status, ms, json };
+}
+
+function hl(obj) {
+    return JSON.stringify(obj, null, 2)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, m => {
+            if (/^"/.test(m)) return /:$/.test(m) ? `<span class="jk">${m}</span>` : `<span class="js">${m}</span>`;
+            if (/true|false/.test(m)) return `<span class="jb">${m}</span>`;
+            if (/null/.test(m)) return `<span class="jz">${m}</span>`;
+            return `<span class="jn">${m}</span>`;
+        });
+}
+
+function showResult(wrapId, outId, statusId, msId, result) {
+    document.getElementById(wrapId).style.display = 'block';
+    const s = document.getElementById(statusId);
+    const ms = document.getElementById(msId);
+    s.className = result.ok ? 'status-ok' : 'status-err';
+    s.textContent = result.ok ? `${result.status} OK` : `${result.status} Error`;
+    ms.textContent = `${result.ms} ms`;
+    document.getElementById(outId).innerHTML = hl(result.json);
+}
+
+function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    btn.disabled = loading;
+    btn.textContent = loading ? 'Cargando…' : 'Ejecutar';
+}
+
+function copyResult(outId) {
+    const el = document.getElementById(outId);
+    navigator.clipboard.writeText(el.innerText).catch(() => {});
+}
+
+function clearResult(wrapId, outId) {
+    document.getElementById(wrapId).style.display = 'none';
+    document.getElementById(outId).innerHTML = '—';
+}
+
+// ── Endpoint functions ────────────────────────────────────────────────────────
+async function goRendimientos() {
+    setLoading('r1-btn', true);
+    const ticker = document.getElementById('r1-ticker').value.trim();
+    const start  = document.getElementById('r1-start').value;
+    const end    = document.getElementById('r1-end').value;
+    const result = await apiGet(`/rendimientos/${encodeURIComponent(ticker)}?start_date=${start}&end_date=${end}`);
+    showResult('r1-wrap', 'r1-out', 'r1-status', 'r1-ms', result);
+    setLoading('r1-btn', false);
+}
+
+async function goVar() {
+    setLoading('v1-btn', true);
+    const ticker = document.getElementById('v1-ticker').value.trim().toUpperCase();
+    const method = document.getElementById('v1-method').value;
+    const conf   = document.getElementById('v1-conf').value;
+    const start  = document.getElementById('v1-start').value;
+    const end    = document.getElementById('v1-end').value;
+    const result = await apiGet(`/var/${method}?ticker=${encodeURIComponent(ticker)}&conf=${conf}&start_date=${start}&end_date=${end}`);
+    showResult('v1-wrap', 'v1-out', 'v1-status', 'v1-ms', result);
+    setLoading('v1-btn', false);
+}
+
+async function goBacktest() {
+    setLoading('bt-btn', true);
+    const ticker = document.getElementById('bt-ticker').value.trim();
+    const method = document.getElementById('bt-method').value;
+    const conf   = document.getElementById('bt-conf').value;
+    const start  = document.getElementById('bt-start').value;
+    const end    = document.getElementById('bt-end').value;
+    const result = await apiGet(`/var/backtest/${encodeURIComponent(ticker)}?method=${method}&conf=${conf}&start_date=${start}&end_date=${end}`);
+    showResult('bt-wrap', 'bt-out', 'bt-status', 'bt-ms', result);
+    setLoading('bt-btn', false);
+}
+
+async function goFrontera() {
+    setLoading('fe-btn', true);
+    const tickers = document.getElementById('fe-tickers').value.split(',').map(t => t.trim()).filter(Boolean);
+    const sims    = parseInt(document.getElementById('fe-sims').value) || 5000;
+    const targetRaw = document.getElementById('fe-target').value.trim();
+    const body = { tickers, simulations: sims, start_date: document.getElementById('fe-start').value, end_date: document.getElementById('fe-end').value };
+    if (targetRaw) body.target_return = parseFloat(targetRaw);
+    const result = await apiPost('/frontera-eficiente', body);
+    showResult('fe-wrap', 'fe-out', 'fe-status', 'fe-ms', result);
+    setLoading('fe-btn', false);
+}
+
+async function goAlertas() {
+    setLoading('al-btn', true);
+    const tickers = document.getElementById('al-tickers').value.trim();
+    const start   = document.getElementById('al-start').value;
+    const end     = document.getElementById('al-end').value;
+    const result  = await apiGet(`/alertas?tickers=${encodeURIComponent(tickers)}&start_date=${start}&end_date=${end}`);
+    showResult('al-wrap', 'al-out', 'al-status', 'al-ms', result);
+    setLoading('al-btn', false);
+}
+
+// ── Scrollspy ─────────────────────────────────────────────────────────────────
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-link[href^="#"]');
+const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            navLinks.forEach(l => l.classList.remove('active'));
+            const link = document.querySelector(`.nav-link[href="#${e.target.id}"]`);
+            if (link) link.classList.add('active');
+        }
+    });
+}, { threshold: 0.4 });
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

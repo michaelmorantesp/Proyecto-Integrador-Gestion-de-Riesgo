@@ -1,0 +1,14 @@
+streamlit
+pandas
+numpy
+yfinance
+plotly
+scipy
+arch
+fredapi
+python-dotenv
+fastapi
+uvicorn
+pydantic
+statsmodels
+requests-cache
