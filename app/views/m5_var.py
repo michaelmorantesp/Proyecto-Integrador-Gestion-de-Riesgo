@@ -93,11 +93,10 @@ def render(prices, simple_ret, log_ret):
         if st.session_state.get("show_flashcards"):
             robusto = kup["Aceptado"] and chr_test["Independiente"]
             t = "success" if robusto else ("warning" if kup["Aceptado"] else "danger")
+            veredicto = "Ambas validaciones son aprobadas, lo que confirma que el modelo es estadísticamente confiable para gestión de riesgo." if robusto else "El modelo presenta inconsistencias al comparar con las pérdidas históricas — se recomienda revisar el método de estimación."
             flashcard(
                 "Backtesting Kupiec + Christoffersen",
-                f"Kupiec: <b>{kup['Fallos Observados']}</b> fallos reales vs <b>{kup['Fallos Esperados']:.1f}</b> esperados (p = {kup['P-Value']:.3f}). "
-                f"Christoffersen verifica que no se agrupen en el tiempo. "
-                f"<b>{'Ambos tests aprobados → modelo confiable.' if robusto else 'Revisar el método: el modelo no describe bien las pérdidas históricas.'}</b>",
+                f"Se registraron {kup['Fallos Observados']} pérdidas que superaron el límite estimado, frente a {kup['Fallos Esperados']:.1f} esperadas por el modelo. {veredicto}",
                 t,
             )
 
@@ -120,9 +119,8 @@ def render(prices, simple_ret, log_ret):
             import math
             escala = math.sqrt(dias)
             flashcard(
-                "Cono de VaR — regla √t",
-                f"A <b>{dias} días</b>, el riesgo escala por √{dias} ≈ <b>{escala:.1f}×</b> respecto al VaR diario. "
-                f"Este gráfico responde: '¿cuánto podría perder si mantengo esta posición {dias} días sin ajustar?'",
+                "Cono de VaR — proyección temporal",
+                f"El riesgo acumulado crece con el tiempo: a {dias} días, la pérdida potencial escala {escala:.1f} veces respecto al riesgo diario. Este gráfico responde cuánto podría perder si se mantiene esta posición sin ajustes durante ese período.",
                 "warning",
             )
 
@@ -193,9 +191,7 @@ def render(prices, simple_ret, log_ret):
     if st.session_state.get("show_flashcards"):
         flashcard(
             "Comparativa de métodos VaR",
-            f"El <b>CVaR ({cvar_val*100:.2f}%)</b> es el promedio de las pérdidas más allá del VaR — siempre más conservador y matemáticamente 'coherente'. "
-            f"El <b>KDE Epanechnikov</b> estima la distribución real de los datos sin asumir normalidad. "
-            f"La <b>cota Marchinkov ({march*100:.2f}%)</b> es el límite teórico más extremo posible.",
+            f"El CVaR ({cvar_val*100:.2f}%) representa el promedio de pérdidas en el peor escenario — siempre más conservador que el VaR clásico y matemáticamente más robusto porque considera la magnitud de las pérdidas extremas, no solo su probabilidad. La estimación sin supuesto de normalidad y el límite teórico extremo (Marchinkov: {march*100:.2f}%) completan un análisis integral del riesgo de cola.",
             "danger",
         )
 

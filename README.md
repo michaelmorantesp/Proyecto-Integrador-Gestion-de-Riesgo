@@ -10,16 +10,16 @@ Dashboard interactivo para la evaluación cuantitativa de portafolios financiero
 
 ## Módulos
 
-| # | Módulo | Descripción |
-|---|--------|-------------|
-| M1 | Análisis Técnico | Indicadores RSI, MACD, Bandas de Bollinger, SMA, Estocástico |
-| M2 | Rendimientos | Rendimientos simples y logarítmicos, tests de normalidad (Jarque-Bera, Shapiro-Wilk) |
-| M3 | Modelos GARCH | Ajuste ARCH/GARCH con selección por AIC/BIC, volatilidad condicional |
-| M4 | Riesgo Sistemático | Beta, CAPM, Alpha de Jensen, Tracking Error |
-| M5 | Valor en Riesgo | VaR Paramétrico, Histórico, Montecarlo, CVaR, VaR KDE, Test de Kupiec |
-| M6 | Markowitz | Frontera eficiente, portafolio de mínima varianza, máximo Sharpe (10 000 simulaciones) |
-| M7 | Señales Automáticas | Alertas de compra/venta/neutro basadas en cruces de indicadores técnicos |
-| M8 | Contexto Macro | Tasa libre de riesgo (FRED DGS10), inflación (CPIAUCSL), tipo de cambio EUR/USD |
+| #  | Módulo                  | Descripción                                                                                                                          |
+| -- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| M1 | Análisis Técnico       | Indicadores RSI, MACD, Bandas de Bollinger, SMA, Estocástico                                                                         |
+| M2 | Rendimientos             | Rendimientos simples y logarítmicos, tests de normalidad (Jarque-Bera, Shapiro-Wilk)                                                 |
+| M3 | Modelos GARCH            | Ajuste ARCH/GARCH con selección por AIC/BIC, volatilidad condicional                                                                 |
+| M4 | Riesgo Sistemático      | Beta, CAPM, Alpha de Jensen, Tracking Error                                                                                           |
+| M5 | Valor en Riesgo          | VaR Paramétrico, Histórico, Montecarlo, CVaR, VaR KDE, Test de Kupiec                                                               |
+| M6 | Markowitz                | Frontera eficiente, portafolio de mínima varianza, máximo Sharpe (10 000 simulaciones)                                              |
+| M7 | Señales Automáticas    | Alertas de compra/venta/neutro basadas en cruces de indicadores técnicos                                                             |
+| M8 | Contexto Macro           | Tasa libre de riesgo (FRED DGS10), inflación (CPIAUCSL), tipo de cambio EUR/USD                                                      |
 | B+ | **Bonificaciones** | **API REST avanzada**, **Backtesting VaR (Kupiec)**, **Despliegue Cloud (Render/Streamlit)**, **Stress Test** |
 
 ---
@@ -39,11 +39,11 @@ La pantalla de inicio presenta un diseño **Premium SaaS** con las siguientes ca
 
 ### Navegación por Teclado
 
-| Tecla | Acción |
-|-------|--------|
-| `Espacio` | Abre el dashboard desde la portada |
-| `→` | Avanza al siguiente módulo (tabs) |
-| `←` | Retrocede al módulo anterior (tabs) |
+| Tecla       | Acción                              |
+| ----------- | ------------------------------------ |
+| `Espacio` | Abre el dashboard desde la portada   |
+| `→`      | Avanza al siguiente módulo (tabs)   |
+| `←`      | Retrocede al módulo anterior (tabs) |
 
 > Las teclas de módulo no actúan si el foco está en un campo de texto o selector.
 
@@ -87,16 +87,16 @@ RiskLab_Portfolio/
 
 ## Tecnologías
 
-| Categoría | Herramientas |
-|-----------|-------------|
-| Lenguaje | Python 3.10+ |
-| Frontend | Streamlit, Plotly |
-| API REST | FastAPI, Uvicorn, Pydantic |
-| Analítica | Pandas, NumPy, SciPy, Statsmodels |
-| Volatilidad | arch (Kevin Sheppard) |
-| Datos de mercado | yfinance, requests-cache |
-| Datos macro | fredapi (FRED) |
-| Configuración | python-dotenv |
+| Categoría       | Herramientas                      |
+| ---------------- | --------------------------------- |
+| Lenguaje         | Python 3.10+                      |
+| Frontend         | Streamlit, Plotly                 |
+| API REST         | FastAPI, Uvicorn, Pydantic        |
+| Analítica       | Pandas, NumPy, SciPy, Statsmodels |
+| Volatilidad      | arch (Kevin Sheppard)             |
+| Datos de mercado | yfinance, requests-cache          |
+| Datos macro      | fredapi (FRED)                    |
+| Configuración   | python-dotenv                     |
 
 ---
 
@@ -151,12 +151,15 @@ Documentación interactiva disponible en `http://localhost:8000/docs`.
 ## 🚀 Despliegue en la Nube
 
 ### 1. Render (API & Dashboard)
+
 El proyecto incluye un archivo `render.yaml` que permite el despliegue automático en la plataforma Render.
+
 - Conecta tu repositorio de GitHub a Render.
 - Crea un nuevo **Blueprint Instance**.
 - Render detectará el archivo yaml y desplegará dos servicios: la API y el Dashboard.
 
 ### 2. Streamlit Cloud (Dashboard optimizado)
+
 - Sube el código a GitHub.
 - Ve a [share.streamlit.io](https://share.streamlit.io/).
 - Conecta el repo y selecciona `app/main.py` como punto de entrada.

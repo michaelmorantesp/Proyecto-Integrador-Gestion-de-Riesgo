@@ -144,8 +144,6 @@ def render(prices, simple_ret, log_ret):
         ventas  = sum(1 for r in results if "Venta"  in r["Señal"])
         flashcard(
             "Motor de señales multi-indicador",
-            f"Resumen actual: <b>{compras} señal(es) de compra</b> · <b>{ventas} señal(es) de venta</b> sobre {len(results)} activos. "
-            f"Un solo indicador genera cruces falsos frecuentes. Al exigir confluencia de 5 indicadores simultáneos, "
-            f"el motor solo activa señal cuando hay consenso técnico real.",
+            f"El sistema detecta {compras} señal(es) de compra y {ventas} de venta sobre {len(results)} activos analizados. Al exigir coincidencia simultánea de cinco indicadores independientes, eliminamos las señales falsas que cualquier indicador genera por sí solo.",
             "success" if compras > ventas else ("danger" if ventas > compras else "info"),
         )

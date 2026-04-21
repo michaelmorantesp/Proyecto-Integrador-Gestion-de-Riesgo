@@ -86,8 +86,7 @@ def render(prices, simple_ret, log_ret):
         tipo_beta = "danger" if beta_val > 1.2 else ("success" if beta_val < 0.8 else "info")
         flashcard(
             "Dispersión CAPM (β)",
-            f"La pendiente β = <b>{beta_val:.2f}</b>: si el SPY cae 10%, <b>{asset}</b> cae ~<b>{lost_pct:.1f}%</b> en promedio. "
-            f"La dispersión vertical alrededor de la línea es el riesgo idiosincrático — ese riesgo <b>no lo compensa el mercado</b>.",
+            f"Con β = {beta_val:.2f}, si el mercado cae 10%, {asset} cae aproximadamente {lost_pct:.1f}% — evidenciando su nivel de exposición al riesgo de mercado. La dispersión vertical alrededor de la línea representa el riesgo propio de la empresa, que la teoría financiera establece que no debería ser compensado por el mercado.",
             tipo_beta,
         )
 

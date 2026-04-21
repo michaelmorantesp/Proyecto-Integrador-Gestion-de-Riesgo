@@ -1,10 +1,15 @@
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+# Asegura que la raíz del proyecto esté en el path sin importar desde dónde se corra
+_project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
 
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
+from datetime import date, timedelta
 
 st.set_page_config(
     page_title="RiskLab USTA · Risk Dashboard",
@@ -207,17 +212,20 @@ with st.container():
         [2.2, 2.2, 2.2, 2, 1.8], gap="medium"
     )
 
+    _today = date.today()
+    _two_years_ago = _today - timedelta(days=730)
+
     with ctrl_c1:
         start_date = st.date_input(
             "Fecha inicio",
-            value=pd.to_datetime("2021-01-01"),
+            value=_two_years_ago,
             key="start_date_input",
         )
 
     with ctrl_c2:
         end_date = st.date_input(
             "Fecha fin",
-            value=pd.to_datetime("2023-12-31"),
+            value=_today,
             key="end_date_input",
         )
 

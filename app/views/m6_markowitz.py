@@ -150,8 +150,6 @@ def render(prices, simple_ret, log_ret):
             if st.session_state.get("show_flashcards"):
                 flashcard(
                     "Frontera Eficiente de Markowitz",
-                    f"<b>⭐ Rojo</b> = Mínima Varianza: Vol. {min_vol['Volatilidad']*100:.1f}% — máxima diversificación posible. "
-                    f"<b>⭐ Ámbar</b> = Máximo Sharpe: {max_sharpe['Sharpe_Ratio']:.2f} — mejor retorno por unidad de riesgo. "
-                    f"Ningún portafolio puede existir arriba-izquierda de la curva: es la frontera matemática del riesgo-retorno.",
+                    f"La estrella roja señala la combinación de activos con menor riesgo posible (volatilidad {min_vol['Volatilidad']*100:.1f}%), mientras la estrella ámbar identifica la mejor relación retorno-riesgo con un índice de eficiencia de {max_sharpe['Sharpe_Ratio']:.2f}. Ningún portafolio puede posicionarse arriba y a la izquierda de esta curva — representa el límite matemático de lo que la diversificación puede lograr.",
                     "info",
                 )

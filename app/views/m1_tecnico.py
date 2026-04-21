@@ -80,19 +80,17 @@ def render(prices, simple_ret, log_ret):
     if st.session_state.get("show_flashcards"):
         ultimo = data.iloc[-1]
         if ultimo > upper_band.iloc[-1]:
-            estado = "🔴 tocando banda superior → sobrecompra"
+            estado = "ha superado el límite estadístico superior — señal de agotamiento alcista"
             tipo_fc = "danger"
         elif ultimo < lower_band.iloc[-1]:
-            estado = "🟢 tocando banda inferior → sobreventa"
+            estado = "ha caído por debajo del límite estadístico inferior — zona técnica de sobreventa"
             tipo_fc = "success"
         else:
-            estado = "⚪ dentro del canal → consolidación"
+            estado = "se mantiene dentro del canal de volatilidad — en fase de consolidación"
             tipo_fc = "info"
         flashcard(
             "Bollinger Bands",
-            f"<b>{ticker}</b> cotiza a <b>${ultimo:.2f}</b> — {estado}. "
-            f"Las bandas son ±{bb_std:.1f}σ sobre la SMA({ma_window}): cuando el precio las rompe, "
-            f"el movimiento está estadísticamente agotado. La EMA reacciona antes a cambios de tendencia.",
+            f"{ticker} a ${ultimo:.2f} {estado}. Cuando el precio alcanza los extremos de este canal, la tendencia pierde fuerza y estadísticamente tiende a revertirse.",
             tipo_fc,
         )
 
@@ -121,12 +119,18 @@ def render(prices, simple_ret, log_ret):
 
         if st.session_state.get("show_flashcards"):
             v = rsi.iloc[-1]
-            s = "🔴 Sobrecompra — posible corrección" if v > 70 else ("🟢 Sobreventa — posible rebote" if v < 30 else "⚪ Zona neutra")
-            t = "danger" if v > 70 else ("success" if v < 30 else "info")
+            if v > 70:
+                s = f"registra {v:.1f} — el mercado acumula presión compradora insostenible, anticipando una corrección"
+                t = "danger"
+            elif v < 30:
+                s = f"cayó a {v:.1f} — el activo está siendo vendido de forma excesiva, generando una oportunidad de rebote"
+                t = "success"
+            else:
+                s = f"registra {v:.1f} — la tendencia mantiene momentum equilibrado, sin señal de agotamiento"
+                t = "info"
             flashcard(
                 "RSI",
-                f"RSI actual de <b>{ticker}</b>: <b>{v:.1f}</b> → {s}. "
-                f"El RSI mide si el activo se 'cansó' de su tendencia: &gt;70 indica compra excesiva, &lt;30 indica venta excesiva.",
+                f"{ticker} {s}. Este indicador mide el agotamiento de la tendencia: valores por encima de 70 o por debajo de 30 son zonas de alerta crítica.",
                 t,
             )
 
@@ -154,12 +158,11 @@ def render(prices, simple_ret, log_ret):
 
         if st.session_state.get("show_flashcards"):
             v = macd_hist.iloc[-1]
-            s = "🟢 momentum alcista — la tendencia gana fuerza" if v > 0 else "🔴 presión bajista — la tendencia pierde fuerza"
+            s = "confirma momentum alcista — la tendencia gana fuerza" if v > 0 else "señala presión bajista — la tendencia pierde impulso"
             t = "success" if v > 0 else "danger"
             flashcard(
                 "MACD",
-                f"Histograma: <b>{v:+.4f}</b> → {s}. "
-                f"Barras creciendo = aceleración; cruce de la línea MACD sobre Signal = señal clásica de entrada.",
+                f"El histograma de {ticker} {s}. Cuando las barras crecen en un mismo sentido, la aceleración del precio está siendo respaldada por convicción del mercado.",
                 t,
             )
 
@@ -199,18 +202,17 @@ def render(prices, simple_ret, log_ret):
             k_val = k_stoch.iloc[-1]
             d_val = d_stoch.iloc[-1]
             if k_val > 80 and d_val > 80:
-                stoc_alert = "🔴 Sobrecompra — ambas líneas agotadas"
+                stoc_alert = "ambas líneas confirman sobrecompra — la presión compradora está estadísticamente agotada"
                 t = "danger"
             elif k_val < 20 and d_val < 20:
-                stoc_alert = "🟢 Sobreventa — posible rebote inminente"
+                stoc_alert = "ambas líneas confirman sobreventa — el mercado ha castigado este activo en exceso"
                 t = "success"
             else:
-                stoc_alert = "⚪ Zona neutra"
+                stoc_alert = "se encuentran en zona neutral — sin señal de agotamiento claro"
                 t = "info"
             flashcard(
                 "Estocástico",
-                f"%K = <b>{k_val:.0f}</b> · %D = <b>{d_val:.0f}</b> → {stoc_alert}. "
-                f"La señal más potente ocurre cuando %K cruza %D dentro de una zona extrema (&gt;80 o &lt;20).",
+                f"{ticker}: %K={k_val:.0f} y %D={d_val:.0f} — {stoc_alert}. La señal más confiable ocurre cuando ambas líneas convergen simultáneamente en una zona extrema.",
                 t,
             )
 

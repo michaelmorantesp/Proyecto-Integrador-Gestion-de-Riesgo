@@ -103,11 +103,11 @@ def render(prices, simple_ret, log_ret):
     if st.session_state.get("show_flashcards"):
         kurt = stats["Curtosis"]
         skew = stats["Asimetría (Skewness)"]
+        tail_desc = "los eventos extremos ocurren con mayor frecuencia de la esperada" if kurt > 0 else "la distribución presenta variabilidad más contenida que la normal"
+        skew_desc = "con caídas que tienden a ser más bruscas que los rebotes" if skew < 0 else "con rebotes que tienden a superar las caídas en magnitud"
         flashcard(
             "Distribución de rendimientos",
-            f"Curtosis = <b>{kurt:.2f}</b> (normal = 0) → las colas son más anchas de lo que predice la estadística clásica: "
-            f"los crashes ocurren con mayor frecuencia de la esperada. "
-            f"Asimetría = <b>{skew:.2f}</b> → {'las caídas son más bruscas que los rebotes' if skew < 0 else 'los rebotes superan las caídas en magnitud'}.",
+            f"Los datos muestran que {tail_desc}, {skew_desc}. Este comportamiento — conocido como 'colas pesadas' — justifica el uso de modelos que van más allá de la estadística clásica.",
             "warning",
         )
 
@@ -178,9 +178,7 @@ def render(prices, simple_ret, log_ret):
     if st.session_state.get("show_flashcards"):
         flashcard(
             "Tests de normalidad",
-            "Ambos tests rechazan la normalidad (p &lt; 0.05). "
-            "<b>Implicación directa:</b> el VaR paramétrico que asume distribución Normal subestima el riesgo real — "
-            "justificando el uso de métodos histórico y Monte Carlo en el Módulo 5.",
+            "Las pruebas estadísticas rechazan que los rendimientos sigan una distribución normal, lo que significa que los modelos clásicos subestiman el riesgo real. Esto valida directamente el uso de métodos históricos y de simulación en el análisis de riesgo del Módulo 5.",
             "danger",
         )
 

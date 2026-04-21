@@ -85,8 +85,7 @@ def render(prices, simple_ret, log_ret):
         spy_cum = float((1 + simple_ret[benchmark]).prod() - 1) * 100
         flashcard(
             "Desempeño acumulado vs benchmark",
-            f"El SPY (línea punteada) acumuló <b>{spy_cum:.1f}%</b> en el período — es el mínimo que cualquier inversor pasivo habría obtenido sin esfuerzo. "
-            f"Solo los activos que terminan por encima justifican el riesgo y los costos de la gestión activa.",
+            f"El SPY acumuló {spy_cum:.1f}% en el período analizado, estableciendo el piso de referencia que cualquier inversor pasivo habría obtenido sin costos de gestión activa. Solo los activos que superan este umbral justifican el riesgo adicional asumido.",
             "info",
         )
 
@@ -175,8 +174,6 @@ def render(prices, simple_ret, log_ret):
         n_alfa_pos = len(ganadores)
         flashcard(
             "Alpha de Jensen y métricas de performance",
-            f"<b>{n_alfa_pos} de {len(rows)} activo(s)</b> generaron Alpha positivo — superaron al mercado después de ajustar por su Beta. "
-            f"Con Rf = <b>{rf_rate*100:.1f}%</b>, el CAPM fija el 'mínimo aceptable' por riesgo. "
-            f"Alpha positivo es la prueba estadística de que la selección de activos agregó valor real.",
+            f"{n_alfa_pos} de {len(rows)} activos superaron al mercado después de ajustar por su nivel de riesgo sistemático, con una tasa libre de riesgo de referencia de {rf_rate*100:.1f}%. El Alpha positivo es la evidencia cuantitativa de que la selección de activos aportó valor real por encima de lo que el mercado compensa naturalmente.",
             "success" if n_alfa_pos > len(rows) / 2 else "warning",
         )

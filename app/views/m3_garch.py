@@ -137,13 +137,11 @@ def render(prices, simple_ret, log_ret):
 
                 if st.session_state.get("show_flashcards"):
                     h1, hn = vol_forecast.iloc[0], vol_forecast.iloc[-1]
-                    tend = "creciente 📈" if hn > h1 else "decreciente 📉"
+                    tend = "creciente" if hn > h1 else "decreciente"
                     tipo_vol = "warning" if hn > h1 else "success"
                     flashcard(
-                        f"GARCH — pronóstico de volatilidad",
-                        f"Día 1: <b>{h1:.4f}</b> → Día {n_steps}: <b>{hn:.4f}</b> ({tend}). "
-                        f"<b>α+β = {persist:.3f}</b>: cuanto más cerca de 1, más tiempo persiste el impacto de un shock — "
-                        f"por eso el GARCH supera a la volatilidad histórica fija para calcular VaR.",
+                        "GARCH — pronóstico de volatilidad",
+                        f"La variabilidad proyectada es {tend}: parte en {h1:.4f} hoy y alcanza {hn:.4f} en el día {n_steps}. Con una persistencia de {persist:.3f}, el mercado tarda ese tiempo en absorber un choque — razón por la cual este modelo supera a la volatilidad histórica estática.",
                         tipo_vol,
                     )
 
