@@ -58,29 +58,45 @@ La pantalla de inicio presenta un diseño **Premium SaaS** con las siguientes ca
 
 ```
 RiskLab_Portfolio/
-├── app/                        # Frontend Streamlit
-│   ├── main.py                 # Punto de entrada, hero, navegación y tabs
-│   ├── style.py                # Sistema de diseño, paleta, CSS global y hero styles
-│   ├── static/                 # Recursos estáticos (imágenes)
-│   └── views/                  # Vistas por módulo (m1 a m8)
-├── api/                        # API REST (FastAPI)
-│   ├── main.py                 # Endpoints cuantitativos
-│   └── index.html              # Cliente HTML del API
-├── src/                        # Backend analítico
-│   ├── ingestion/              # Ingesta de datos
-│   │   ├── market_api.py       # Precios de mercado (yfinance + caché SQLite)
-│   │   └── macro_api.py        # Indicadores macro (FRED API)
-│   └── analysis/               # Motor de cálculo
-│       ├── pipeline.py         # Pipeline de descarga y rendimientos
-│       ├── technical.py        # Indicadores técnicos
-│       ├── volatility.py       # Modelos ARCH/GARCH
-│       ├── risk_models.py      # VaR, CVaR, Kupiec
-│       ├── portfolio.py        # Beta, CAPM, Markowitz
-│       └── returns.py          # Utilidades de rendimientos
-├── data/                       # Caché de datos descargados
-├── .env.example                # Plantilla de variables de entorno
-├── requirements.txt            # Dependencias Python
-└── 09_proyecto_consolidado_final.ipynb  # Notebook consolidado del proyecto
+├── app/                            # Frontend Streamlit
+│   ├── main.py                     # Punto de entrada: hero, controles, navegación y tabs
+│   ├── style.py                    # Sistema de diseño: paleta, CSS global, flashcard(), module_header()
+│   ├── static/                     # Recursos estáticos (portada.png)
+│   └── views/                      # Vistas por módulo
+│       ├── m1_tecnico.py           # Análisis técnico: MA, Bollinger, RSI, MACD, Estocástico
+│       ├── m2_rendimientos.py      # Rendimientos simples/log, estadísticas, tests de normalidad
+│       ├── m3_garch.py             # Modelos ARCH/GARCH, pronóstico de volatilidad
+│       ├── m4_capm.py              # Beta, CAPM, riesgo sistemático vs idiosincrático
+│       ├── m5_var.py               # VaR (paramétrico, histórico, MC, KDE), CVaR, Kupiec
+│       ├── m6_markowitz.py         # Frontera eficiente, mínima varianza, máximo Sharpe
+│       ├── m7_senales.py           # Motor multi-indicador: señales automáticas de trading
+│       └── m8_macro.py             # Benchmark SPY, Alpha de Jensen, panel macro (FRED)
+├── api/                            # API REST (FastAPI)
+│   ├── main.py                     # Endpoints cuantitativos
+│   └── index.html                  # Cliente HTML del API
+├── src/                            # Backend analítico
+│   ├── ingestion/
+│   │   ├── market_api.py           # Precios de mercado via yfinance + caché SQLite
+│   │   └── macro_api.py            # Indicadores macro via FRED API
+│   └── analysis/
+│       ├── pipeline.py             # Pipeline de descarga y cálculo de rendimientos
+│       ├── technical.py            # Indicadores técnicos (RSI, MACD, Bollinger, etc.)
+│       ├── volatility.py           # Modelos ARCH/GARCH
+│       ├── risk_models.py          # VaR, CVaR, KDE Epanechnikov, Kupiec, Christoffersen
+│       ├── portfolio.py            # Beta, CAPM, Markowitz, Alpha de Jensen
+│       └── returns.py              # Estadísticas descriptivas y tests de normalidad
+├── data/
+│   └── yfinance_cache.sqlite       # Caché local de precios descargados
+├── .streamlit/
+│   ├── config.toml                 # Configuración del servidor Streamlit
+│   └── static/                     # Activos estáticos servidos por Streamlit
+├── .env.example                    # Plantilla de variables de entorno (FRED_API_KEY)
+├── .gitignore
+├── render.yaml                     # Configuración de despliegue en Render
+├── requirements.txt                # Dependencias Python
+├── guia_indicadores_risklab.html   # Guía de referencia de indicadores
+├── presentacion_risklab.html       # Presentación del proyecto
+└── 09_proyecto_consolidado_final.ipynb  # Notebook de investigación original
 ```
 
 ---
@@ -108,13 +124,13 @@ git clone <url-del-repositorio>
 cd RiskLab_Portfolio
 
 # 2. Crear y activar entorno virtual
-python -m venv env
+python -m venv .venv
 
 # Windows
-env\Scripts\activate
+.venv\Scripts\activate
 
 # Linux / macOS
-source env/bin/activate
+source .venv/bin/activate
 
 # 3. Instalar dependencias
 pip install -r requirements.txt
