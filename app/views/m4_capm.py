@@ -120,6 +120,49 @@ def render(prices, simple_ret, log_ret):
     df_summary = pd.DataFrame(summary_data).set_index("Activo")
     st.dataframe(df_summary, use_container_width=True)
 
+    # ── Beta del Portafolio ───────────────────────────────────────────────
+    st.markdown("---")
+    st.subheader("🎯 Beta del Portafolio")
+
+    assets = [col for col in simple_ret.columns if col != benchmark]
+    aligned = simple_ret[assets].dropna()
+    port_ret = aligned.mean(axis=1)
+    bench_aligned = bench_data.reindex(port_ret.index).dropna()
+    port_ret = port_ret.reindex(bench_aligned.index)
+
+    port_beta = float(calculate_beta(port_ret, bench_aligned))
+    port_capm = CAPM_expected_return(port_beta, rf_rate, market_return)
+    port_real = float(port_ret.mean() * 252)
+
+    pa, pb, pc = st.columns(3)
+    pa.metric("β Portafolio (Eq. Weight)", f"{port_beta:.4f}")
+    pb.metric("E(R) CAPM Portafolio", f"{port_capm*100:.2f}%")
+    pc.metric("Retorno Real Portafolio", f"{port_real*100:.2f}%")
+
+    betas_ind = [float(calculate_beta(simple_ret[a].dropna(), bench_data)) for a in assets]
+    beta_avg = np.mean(betas_ind)
+
+    st.caption(
+        f"β calculado por regresión directa del portafolio equiponderado contra {benchmark}. "
+        f"Media aritmética de betas individuales: **{beta_avg:.4f}** "
+        f"(converge al beta de regresión con pesos iguales)."
+    )
+
+    if port_beta < 0.8:
+        st.success(f"**Portafolio DEFENSIVO** (β={port_beta:.2f}) · La diversificación reduce la exposición sistémica por debajo del mercado.")
+    elif port_beta > 1.2:
+        st.warning(f"**Portafolio AGRESIVO** (β={port_beta:.2f}) · El conjunto amplifica los movimientos del índice.")
+    else:
+        st.info(f"**Portafolio NEUTRO** (β≈{port_beta:.2f}) · Riesgo sistémico alineado con el mercado.")
+
+    if st.session_state.get("show_flashcards"):
+        flashcard(
+            "Beta del Portafolio",
+            f"Con β_portafolio = {port_beta:.2f}, si el mercado cae 10% el portafolio cae ≈ {port_beta*10:.1f}%. "
+            f"La diversificación entre {len(assets)} activos no elimina el riesgo sistemático — solo el idiosincrático.",
+            "danger" if port_beta > 1.2 else ("success" if port_beta < 0.8 else "info"),
+        )
+
     # ── Discusión de Riesgo Sistemático ───────────────────────────────────
     st.markdown("---")
     st.subheader("📖 Riesgo Sistemático vs. Idiosincrático")

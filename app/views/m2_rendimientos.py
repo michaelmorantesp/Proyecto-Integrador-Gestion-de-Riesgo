@@ -79,6 +79,13 @@ def render(prices, simple_ret, log_ret):
     st.subheader("📐 Distribución de Log-Rendimientos")
     data_ret = log_ret[ticker].dropna()
 
+    df_t = st.slider(
+        "Grados de libertad — distribución t-Student (ν)",
+        min_value=2, max_value=50, value=5, step=1,
+        key="m2_df_t",
+        help="Valores bajos de ν producen colas más pesadas. ν → ∞ converge a la Normal.",
+    )
+
     fig = go.Figure()
     fig.add_trace(go.Histogram(
         x=data_ret, nbinsx=120,
@@ -86,17 +93,26 @@ def render(prices, simple_ret, log_ret):
         name="Empírico",
     ))
 
-    # Curva normal teórica
-    x_val = np.linspace(stats["Mínimo"], stats["Máximo"], 200)
+    x_val = np.linspace(stats["Mínimo"], stats["Máximo"], 300)
     mu, sigma = stats["Media"], stats["Volatilidad (Desv. Std)"]
-    pdf = (1 / (sigma * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x_val - mu) / sigma) ** 2)
     scale = len(data_ret) * (stats["Máximo"] - stats["Mínimo"]) / 120
 
+    # Curva Normal teórica
+    pdf_norm = scipy_stats.norm.pdf(x_val, loc=mu, scale=sigma)
     fig.add_trace(go.Scatter(
-        x=x_val, y=pdf * scale, mode="lines",
+        x=x_val, y=pdf_norm * scale, mode="lines",
         name="Normal Teórica",
         line=dict(color=COLORS["danger"], width=2, dash="dash"),
     ))
+
+    # Curva t-Student ajustada a misma media y desv. estándar
+    pdf_t = scipy_stats.t.pdf(x_val, df=df_t, loc=mu, scale=sigma)
+    fig.add_trace(go.Scatter(
+        x=x_val, y=pdf_t * scale, mode="lines",
+        name=f"t-Student (ν={df_t})",
+        line=dict(color=COLORS["accent_teal"], width=2),
+    ))
+
     apply_chart_layout(fig, height=420, title=f"Log-rendimientos {ticker}")
     st.plotly_chart(fig, use_container_width=True)
 

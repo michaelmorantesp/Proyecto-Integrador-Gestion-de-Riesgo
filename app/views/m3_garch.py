@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import plotly.graph_objects as go
 import scipy.stats as scipy_stats
 from src.analysis.volatility import compare_volatility_models, fit_garch_model
 from app.style import COLORS, apply_chart_layout, flashcard, module_header
@@ -22,14 +23,25 @@ def render(prices, simple_ret, log_ret):
         st.info("⬅️ Carga el portafolio desde el panel lateral para comenzar.")
         return
 
-    ticker = st.selectbox("Activo (se recomienda uno con volatility clustering visible)", log_ret.columns, key="m3_ticker")
+    col_ticker, col_dist = st.columns([3, 1])
+    ticker = col_ticker.selectbox(
+        "Activo (se recomienda uno con volatility clustering visible)",
+        log_ret.columns, key="m3_ticker",
+    )
+    dist_label = col_dist.selectbox(
+        "Distribución de errores",
+        ["t-Student", "Normal"], key="m3_dist",
+        help="t-Student captura colas pesadas — recomendada cuando los rendimientos no son normales.",
+    )
+    selected_dist = "t" if dist_label == "t-Student" else "normal"
     data_ret = log_ret[ticker].dropna()
 
     # ── Comparación de modelos ────────────────────────────────────────────
     st.subheader("📊 Comparación de Especificaciones")
+    st.caption(f"Distribución usada: **{dist_label}**")
     with st.spinner("Estimando ARCH/GARCH…"):
         try:
-            df = compare_volatility_models(data_ret)
+            df = compare_volatility_models(data_ret, dist=selected_dist)
             st.dataframe(
                 df.style.highlight_min(subset=["AIC", "BIC"], color="#064E3B"),
                 use_container_width=True,
@@ -48,25 +60,35 @@ def render(prices, simple_ret, log_ret):
     p = col2.number_input("Rezago p", 1, 5, 1, key="m3_p")
     q = col3.number_input("Rezago q", 0, 5, 1, key="m3_q")
     n_steps = col4.number_input("Días", 1, 60, 5, help="Horizonte de pronóstico N-pasos", key="m3_nsteps")
+    st.caption(f"Distribución activa: **{dist_label}** — cambia el selector de arriba para alternar.")
 
     if st.button("Estimar modelo", key="m3_btn_estimar"):
         with st.spinner("Optimizando log-verosimilitud…"):
             try:
-                res = fit_garch_model(data_ret, model_type=selected_model, p=p, q=q)
+                res = fit_garch_model(data_ret, model_type=selected_model, p=p, q=q, dist=selected_dist)
                 mu_val = res.params.get("mu", 0.0)
 
-                # Parámetros de varianza condicional
                 omega = res.params.get("omega", 0)
                 alpha_tex = "".join([
-                    f" + {v:.4f}\\epsilon_{{t-{k.split('[')[1].replace(']','')}}}^2"
+                    f" + {v:.4f}\\epsilon_{{t-{k.split('[')[1].replace(']', '')}}}^2"
                     for k, v in res.params.items() if "alpha" in k
                 ])
                 beta_tex = "".join([
-                    f" + {v:.4f}\\sigma_{{t-{k.split('[')[1].replace(']','')}}}^2"
+                    f" + {v:.4f}\\sigma_{{t-{k.split('[')[1].replace(']', '')}}}^2"
                     for k, v in res.params.items() if "beta" in k
                 ])
                 st.latex(rf"r_t = {mu_val:.5f} + \epsilon_t")
                 st.latex(rf"\sigma_t^2 = {omega:.6f} {alpha_tex} {beta_tex}")
+
+                # Grados de libertad estimados
+                if selected_dist == "t":
+                    nu_val = res.params.get("nu", None)
+                    if nu_val is not None:
+                        st.info(
+                            f"**Grados de libertad estimados (ν = {nu_val:.2f})** — "
+                            f"Valores bajos (ν < 10) confirman colas pesadas. "
+                            f"A medida que ν → ∞ la t converge a la Normal."
+                        )
 
                 # Estacionariedad
                 a_sum = sum(v for k, v in res.params.items() if "alpha" in k)
@@ -79,9 +101,8 @@ def render(prices, simple_ret, log_ret):
 
                 # Pronóstico N-Pasos
                 st.markdown(f"#### Pronóstico de Volatilidad N-Pasos ({n_steps} días)")
-                import plotly.graph_objects as go
                 forecasts = res.forecast(horizon=n_steps)
-                vol_forecast = np.sqrt(forecasts.variance.dropna().iloc[-1]) / 100  # Desescalar
+                vol_forecast = np.sqrt(forecasts.variance.dropna().iloc[-1]) / 100
 
                 fig = go.Figure()
                 fig.add_trace(go.Bar(
@@ -94,41 +115,40 @@ def render(prices, simple_ret, log_ret):
                 apply_chart_layout(fig, height=280, title=f"Varianza Condicional Futura ({n_steps}d)")
                 st.plotly_chart(fig, use_container_width=True)
 
-                # ── Diagnóstico de Residuos ───────────────────────────────────
+                # ── Diagnóstico de Residuos ───────────────────────────────
                 st.markdown("---")
                 st.markdown("#### Diagnóstico sobre Residuos Estandarizados")
                 std_resid = res.std_resid.dropna()
-                
+
                 col_res, col_jb = st.columns([2, 1])
                 with col_res:
                     fig_res = go.Figure()
                     fig_res.add_trace(go.Scatter(
-                        x=std_resid.index, y=std_resid, mode='markers', 
-                        name='Residuos Est.', 
-                        marker=dict(color=COLORS["accent_blue"], size=4, opacity=0.7)
+                        x=std_resid.index, y=std_resid, mode="markers",
+                        name="Residuos Est.",
+                        marker=dict(color=COLORS["accent_blue"], size=4, opacity=0.7),
                     ))
-                    # Bandas de referencia
                     fig_res.add_hline(y=0, line_width=1, line_dash="solid", line_color="rgba(226,232,240,0.3)")
                     fig_res.add_hline(y=3, line_width=1, line_dash="dot", line_color="rgba(248,113,113,0.7)", annotation_text="+3σ")
                     fig_res.add_hline(y=-3, line_width=1, line_dash="dot", line_color="rgba(248,113,113,0.7)", annotation_text="-3σ")
-                    
                     apply_chart_layout(fig_res, height=280, title="Dispersión de Residuos Estandarizados")
                     st.plotly_chart(fig_res, use_container_width=True)
-                
+
                 with col_jb:
-                    # Test Jarque-Bera
                     jb_stat, p_value = scipy_stats.jarque_bera(std_resid)
                     is_normal = p_value > 0.05
                     icon = "✅" if is_normal else "❌"
                     conc = "Normales" if is_normal else "Anormales (Colas pesadas)"
+                    if selected_dist == "t":
+                        nota = "✅ Distribución t-Student activa — modelo correctamente especificado para colas pesadas."
+                    else:
+                        nota = "⚠️ Residuos anormales: cambia la distribución a t-Student para un mejor ajuste."
                     st.markdown(f"""
                     <div style="background:#111827;border:1px solid rgba(59,130,246,0.2);border-radius:10px;padding:1rem;height:100%;">
                         <div style="font-size:0.7rem;color:#475569;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Jarque-Bera a Residuos</div>
                         <div style="font-size:1.15rem;font-weight:700;color:#E2E8F0;">{icon} {conc}</div>
                         <div style="font-size:0.78rem;color:#64748B;margin-top:0.4rem;">Stat: {jb_stat:.2f} · p: {p_value:.2e}</div>
-                        <div style="font-size:0.75rem;color:#94A3B8;margin-top:1rem;">
-                            <b>Nota:</b> Si el GARCH absorbió la varianza pero los residuos siguen anormales, la base teórica requiere una distribución <i>t-Student</i> en lugar de una <i>Normal</i>.
-                        </div>
+                        <div style="font-size:0.75rem;color:#94A3B8;margin-top:1rem;">{nota}</div>
                     </div>
                     """, unsafe_allow_html=True)
 
@@ -141,7 +161,8 @@ def render(prices, simple_ret, log_ret):
                     tipo_vol = "warning" if hn > h1 else "success"
                     flashcard(
                         "GARCH — pronóstico de volatilidad",
-                        f"La variabilidad proyectada es {tend}: parte en {h1:.4f} hoy y alcanza {hn:.4f} en el día {n_steps}. Con una persistencia de {persist:.3f}, el mercado tarda ese tiempo en absorber un choque — razón por la cual este modelo supera a la volatilidad histórica estática.",
+                        f"La variabilidad proyectada es {tend}: parte en {h1:.4f} hoy y alcanza {hn:.4f} en el día {n_steps}. "
+                        f"Con persistencia {persist:.3f} y distribución {dist_label}, el modelo captura la dinámica real de los retornos.",
                         tipo_vol,
                     )
 
