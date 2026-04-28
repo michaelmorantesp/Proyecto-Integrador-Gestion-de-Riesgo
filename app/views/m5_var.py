@@ -66,34 +66,38 @@ def render(prices, simple_ret, log_ret):
 
     st.markdown("---")
 
-    # ── Kupiec ────────────────────────────────────────────────────────────
-    st.subheader("🔬 Backtesting Avanzado")
-    var_param = risk_df.loc[f"Riesgo {int(conf_1*100)}%", "Paramétrico Diario"]
-    kup = calculate_kupiec_test(data, var_param, conf_1)
-    chr_test = _calculate_christoffersen_test_local(data, var_param)
+    # ── Backtesting por Modelo (Kupiec + Christoffersen) ──────────────────
+    st.subheader("🔬 Backtesting Comparativo")
+    
+    models_to_test = ["Paramétrico Diario", "Histórico Diario", "Montecarlo Diario"]
+    bt_results = []
+    row_label = f"Riesgo {int(conf_1*100)}%"
+    
+    for m_name in models_to_test:
+        v_val = risk_df.loc[row_label, m_name]
+        kup = calculate_kupiec_test(data, v_val, conf_1)
+        chr_test = _calculate_christoffersen_test_local(data, v_val)
+        
+        is_robust = kup["Aceptado"] and chr_test["Independiente"]
+        veredicto = "✅ Robusto" if is_robust else ("⚠️ Cobertura OK" if kup["Aceptado"] else "❌ Inválido")
+        
+        bt_results.append({
+            "Modelo": m_name.replace(" Diario", ""),
+            "Fallos Obs": kup["Fallos Observados"],
+            "Fallos Esp": kup["Fallos Esperados"],
+            "Kupiec (p-val)": kup["P-Value"],
+            "Indep (p-val)": chr_test["P-Value"],
+            "Veredicto": veredicto
+        })
+    
+    bt_df = pd.DataFrame(bt_results)
+    st.dataframe(bt_df, use_container_width=True, hide_index=True)
 
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Fallos Obs.",  str(kup["Fallos Observados"]))
-    c2.metric("P-Value Kupiec", f"{kup['P-Value']:.3f}")
-    c3.metric("LR Independencia", f"{chr_test['LR Independencia']:.2f}")
-    c4.metric("Rachas (Hits)", str(chr_test["Rachas (n11)"]))
+    # Nota explicativa
+    st.caption("ℹ️ **Kupiec:** Evalúa si la cantidad de fallos es correcta. **Indep:** Evalúa si los fallos ocurren en rachas (clusters).")
 
-    if kup["Aceptado"] and chr_test["Independiente"]:
-        st.success("✅ Modelo Robusto (Cobertura e Independencia)")
-    elif kup["Aceptado"]:
-        st.warning("⚠️ Cobertura Aceptada pero Fallos Agrupados (Clustering)")
-    else:
-        st.error("❌ Modelo Inválido (Subestima Riesgo)")
-
-    if st.session_state.get("show_flashcards"):
-        robusto = kup["Aceptado"] and chr_test["Independiente"]
-        t = "success" if robusto else ("warning" if kup["Aceptado"] else "danger")
-        veredicto = "Ambas validaciones son aprobadas, lo que confirma que el modelo es estadísticamente confiable para gestión de riesgo." if robusto else "El modelo presenta inconsistencias al comparar con las pérdidas históricas — se recomienda revisar el método de estimación."
-        flashcard(
-            "Backtesting Kupiec + Christoffersen",
-            f"Se registraron {kup['Fallos Observados']} pérdidas que superaron el límite estimado, frente a {kup['Fallos Esperados']:.1f} esperadas por el modelo. {veredicto}",
-            t,
-        )
+    # Necesitamos var_param para el gráfico de serie temporal siguiente
+    var_param = risk_df.loc[row_label, "Paramétrico Diario"]
 
     st.markdown("---")
 
