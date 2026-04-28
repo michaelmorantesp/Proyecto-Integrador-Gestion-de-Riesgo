@@ -44,7 +44,7 @@ def _max_drawdown(returns: pd.Series) -> float:
 def render(prices, simple_ret, log_ret):
     module_header(
         "🌍 Contexto Macro y Desempeño vs Benchmark",
-        "Alpha de Jensen, Tracking Error, Sharpe y Max Drawdown vs SPY.",
+        "Alpha de Jensen, Sharpe y Max Drawdown vs SPY.",
     )
 
     if prices is None or prices.empty:
@@ -124,9 +124,6 @@ def render(prices, simple_ret, log_ret):
         beta    = calculate_beta(asset_data, bench_data)
         capm_r  = rf_rate + beta * (bench_ann - rf_rate)
         alpha   = ret_ann - capm_r
-        excess  = asset_data - bench_data
-        te      = excess.std() * np.sqrt(252)
-        ir      = (ret_ann - bench_ann) / te if te > 0 else np.nan
         mdd     = _max_drawdown(asset_data)
 
         rows.append({
@@ -136,8 +133,6 @@ def render(prices, simple_ret, log_ret):
             "Sharpe":             f"{sharpe:.2f}",
             "Beta (β)":           f"{beta:.2f}",
             "Alpha Jensen":       f"{alpha*100:.2f}%",
-            "Tracking Error":     f"{te*100:.2f}%",
-            "Info. Ratio":        f"{ir:.2f}",
             "Max Drawdown":       f"{mdd*100:.2f}%",
             "_alpha_float":       alpha,
         })
