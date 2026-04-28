@@ -3,9 +3,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from src.analysis.risk_models import (
-    compare_risk_models, calculate_var_historical, calculate_cvar,
-    calculate_var_kde_epanechnikov, calculate_marchinkov_bound,
-    calculate_kupiec_test, generate_var_cone,
+    compare_risk_models, calculate_kupiec_test
 )
 
 
@@ -68,61 +66,34 @@ def render(prices, simple_ret, log_ret):
 
     st.markdown("---")
 
-    # ── Kupiec + Cono ─────────────────────────────────────────────────────
-    col_kup, col_cono = st.columns(2)
+    # ── Kupiec ────────────────────────────────────────────────────────────
+    st.subheader("🔬 Backtesting Avanzado")
+    var_param = risk_df.loc[f"Riesgo {int(conf_1*100)}%", "Paramétrico Diario"]
+    kup = calculate_kupiec_test(data, var_param, conf_1)
+    chr_test = _calculate_christoffersen_test_local(data, var_param)
 
-    with col_kup:
-        st.subheader("🔬 Backtesting Avanzado")
-        var_param = risk_df.loc[f"Riesgo {int(conf_1*100)}%", "Paramétrico Diario"]
-        kup = calculate_kupiec_test(data, var_param, conf_1)
-        chr_test = _calculate_christoffersen_test_local(data, var_param)
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Fallos Obs.",  str(kup["Fallos Observados"]))
+    c2.metric("P-Value Kupiec", f"{kup['P-Value']:.3f}")
+    c3.metric("LR Independencia", f"{chr_test['LR Independencia']:.2f}")
+    c4.metric("Rachas (Hits)", str(chr_test["Rachas (n11)"]))
 
-        c1, c2 = st.columns(2)
-        c1.metric("Fallos Obs.",  str(kup["Fallos Observados"]))
-        c2.metric("P-Value Kupiec", f"{kup['P-Value']:.3f}")
-        c1.metric("LR Independencia", f"{chr_test['LR Independencia']:.2f}")
-        c2.metric("Rachas (Hits)", str(chr_test["Rachas (n11)"]))
+    if kup["Aceptado"] and chr_test["Independiente"]:
+        st.success("✅ Modelo Robusto (Cobertura e Independencia)")
+    elif kup["Aceptado"]:
+        st.warning("⚠️ Cobertura Aceptada pero Fallos Agrupados (Clustering)")
+    else:
+        st.error("❌ Modelo Inválido (Subestima Riesgo)")
 
-        if kup["Aceptado"] and chr_test["Independiente"]:
-            st.success("✅ Modelo Robusto (Cobertura e Independencia)")
-        elif kup["Aceptado"]:
-            st.warning("⚠️ Cobertura Aceptada pero Fallos Agrupados (Clustering)")
-        else:
-            st.error("❌ Modelo Inválido (Subestima Riesgo)")
-
-        if st.session_state.get("show_flashcards"):
-            robusto = kup["Aceptado"] and chr_test["Independiente"]
-            t = "success" if robusto else ("warning" if kup["Aceptado"] else "danger")
-            veredicto = "Ambas validaciones son aprobadas, lo que confirma que el modelo es estadísticamente confiable para gestión de riesgo." if robusto else "El modelo presenta inconsistencias al comparar con las pérdidas históricas — se recomienda revisar el método de estimación."
-            flashcard(
-                "Backtesting Kupiec + Christoffersen",
-                f"Se registraron {kup['Fallos Observados']} pérdidas que superaron el límite estimado, frente a {kup['Fallos Esperados']:.1f} esperadas por el modelo. {veredicto}",
-                t,
-            )
-
-    with col_cono:
-        st.subheader("📡 Cono de VaR (Proyección)")
-        dias = st.slider("Días a proyectar", 10, 252, 30, key="m5_dias_cono")
-        cono = generate_var_cone(var_param, dias)
-
-        fig_cono = go.Figure()
-        fig_cono.add_trace(go.Scatter(
-            x=np.arange(1, dias + 1), y=cono * 100,
-            fill="tozeroy", fillcolor="rgba(248,113,113,0.12)",
-            line=dict(color=COLORS["danger"], width=2),
-            name="Pérdida Máxima Est.",
-        ))
-        apply_chart_layout(fig_cono, height=280, title="Expansión VaR en el Tiempo (%)")
-        st.plotly_chart(fig_cono, use_container_width=True)
-
-        if st.session_state.get("show_flashcards"):
-            import math
-            escala = math.sqrt(dias)
-            flashcard(
-                "Cono de VaR — proyección temporal",
-                f"El riesgo acumulado crece con el tiempo: a {dias} días, la pérdida potencial escala {escala:.1f} veces respecto al riesgo diario. Este gráfico responde cuánto podría perder si se mantiene esta posición sin ajustes durante ese período.",
-                "warning",
-            )
+    if st.session_state.get("show_flashcards"):
+        robusto = kup["Aceptado"] and chr_test["Independiente"]
+        t = "success" if robusto else ("warning" if kup["Aceptado"] else "danger")
+        veredicto = "Ambas validaciones son aprobadas, lo que confirma que el modelo es estadísticamente confiable para gestión de riesgo." if robusto else "El modelo presenta inconsistencias al comparar con las pérdidas históricas — se recomienda revisar el método de estimación."
+        flashcard(
+            "Backtesting Kupiec + Christoffersen",
+            f"Se registraron {kup['Fallos Observados']} pérdidas que superaron el límite estimado, frente a {kup['Fallos Esperados']:.1f} esperadas por el modelo. {veredicto}",
+            t,
+        )
 
     st.markdown("---")
 
@@ -155,48 +126,3 @@ def render(prices, simple_ret, log_ret):
     st.plotly_chart(fig_bt, use_container_width=True)
 
     st.markdown("---")
-    # ── Histograma con líneas VaR ─────────────────────────────────────────
-    st.subheader("📈 Distribución con Métricas de Riesgo")
-    var_h    = calculate_var_historical(data, conf_1)
-    cvar_val = calculate_cvar(data, conf_1)
-    var_epa  = calculate_var_kde_epanechnikov(data, conf_1)
-    march    = calculate_marchinkov_bound(data, conf_1)
-
-    # Calculamos el tope del histograma para escalar las líneas Scatter
-    hist_counts, _ = np.histogram(data, bins=120)
-    top_y = max(hist_counts) * 1.05
-
-    fig = go.Figure()
-    fig.add_trace(go.Histogram(
-        x=data, nbinsx=120, name="Frecuencia Rendimientos",
-        marker_color=COLORS["accent_indigo"], opacity=0.55,
-    ))
-
-    def vline_trace(val, color, dash, label):
-        fig.add_trace(go.Scatter(
-            x=[val, val], y=[0, top_y], mode="lines",
-            name=f"{label} ({val*100:.2f}%)",
-            line=dict(color=color, dash=dash, width=2)
-        ))
-
-    # Ahora se agrupan en la leyenda interactiva sin solaparse visualmente
-    vline_trace(var_h,    COLORS["warning"],       "dash",    "VaR Histórico")
-    vline_trace(cvar_val, COLORS["danger"],        "solid",   "CVaR (Expected Shortfall)")
-    vline_trace(var_epa,  COLORS["accent_violet"], "dashdot", "VaR KDE Epanechnikov")
-    vline_trace(march,    "#DC2626",               "dot",     "Cota Marchinkov")
-
-    apply_chart_layout(fig, height=520, title=f"Análisis de Colas Pesadas y Riesgo Extremo: {asset}")
-    st.plotly_chart(fig, use_container_width=True)
-
-    if st.session_state.get("show_flashcards"):
-        flashcard(
-            "Comparativa de métodos VaR",
-            f"El CVaR ({cvar_val*100:.2f}%) representa el promedio de pérdidas en el peor escenario — siempre más conservador que el VaR clásico y matemáticamente más robusto porque considera la magnitud de las pérdidas extremas, no solo su probabilidad. La estimación sin supuesto de normalidad y el límite teórico extremo (Marchinkov: {march*100:.2f}%) completan un análisis integral del riesgo de cola.",
-            "danger",
-        )
-
-    with st.expander("📖 KDE Epanechnikov · Cota Marchinkov"):
-        st.info(
-            "**KDE Epanechnikov:** Estima la distribución real de los datos sin asumir normalidad. Usa un núcleo parabólico (óptimo en eficiencia AMISE) para capturar colas pesadas y calcular un VaR más preciso.\n\n"
-            "**Cota Marchinkov:** Límite de pérdida máxima teórica derivado solo de media y varianza, asumiendo la peor distribución posible. Romperla implica un colapso sin precedentes."
-        )
